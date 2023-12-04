@@ -18,15 +18,17 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"flag"
 	"fmt"
+	vmetrics "github.com/VictoriaMetrics/metrics"
+	"github.com/spf13/pflag"
+	"github.com/tgulacsi/pcoweb-client/pkg/config"
+	"github.com/tgulacsi/pcoweb-client/pkg/metrics"
 	"log"
 	"net/http"
 	"net/smtp"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -36,41 +38,41 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/goburrow/modbus"
-
-	"github.com/VictoriaMetrics/metrics"
 )
 
 var hostname string
 
 func main() {
-	if err := Main(); err != nil {
+	if err := run(); err != nil {
 		log.Fatalf("%+v", err)
 	}
 }
 
-func Main() error {
-	flagHost := flag.String("host", "192.168.1.143", "host to connect to with ModBus")
-	flagAddr := flag.String("addr", "127.0.0.1:7070", "address to listen on (Prometheus HTTP)")
-	flagAlertTo := flag.String("alert-to", "", "Prometheus Alert manager")
-	flagTick := flag.Duration("tick", 10*time.Second, "time between measurements")
-	flagTest := flag.Bool("test", false, "send test email")
-	flag.Parse()
+func run() error {
+	f := &config.Flags{}
+	f.Bind(pflag.CommandLine)
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
 
-	// Modbus TCP
-	bus, err := NewBus(*flagHost, Aqua11c)
+	metricsAddr := ":9112"
+	if f.MetricsAddr != "" {
+		metricsAddr = f.MetricsAddr
+	}
+
+	bus, err := NewBus(f.Host, GlenDimplexMapping)
 	if err != nil {
 		return err
 	}
 	if hostname, err = os.Hostname(); err != nil {
 		return err
 	}
-	if *flagTest {
-		if err = sendAlert(*flagAlertTo, []string{"test"}); err != nil {
-			return err
-		}
-	}
 
-	defer bus.Close()
+	defer func(bus *metrics.Bus) {
+		err := bus.Close()
+		if err != nil {
+			log.Printf("error closing bus: %v", err)
+		}
+	}(bus)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	ch := make(chan os.Signal, 1)
@@ -87,18 +89,20 @@ func Main() error {
 	grp, ctx := errgroup.WithContext(ctx)
 
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, req *http.Request) {
-		metrics.WritePrometheus(w, true)
+		vmetrics.WritePrometheus(w, true)
 	})
 	grp.Go(func() error {
-		return http.ListenAndServe(*flagAddr, nil)
+		return http.ListenAndServe(metricsAddr, nil)
 	})
 
 	var mu sync.Mutex
-	act := Aqua11c.NewMeasurement()
-	pre := Aqua11c.NewMeasurement()
+	act := GlenDimplexMapping.NewMeasurement()
+	pre := GlenDimplexMapping.NewMeasurement()
 
-	tick := time.NewTicker(*flagTick)
+	interval := 10 * time.Second
+	tick := time.NewTicker(interval)
 	first := true
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -111,7 +115,7 @@ func Main() error {
 		if first {
 			for k := range act.Map {
 				k := k
-				metrics.NewGauge(fmt.Sprintf("modbus_aqua11c_analogue{name=%q}", k),
+				vmetrics.NewGauge(fmt.Sprintf("modbus_aqua11c_analogue{name=%q}", k),
 					func() float64 {
 						mu.Lock()
 						v := float64(act.Map[k]) / 10.0
@@ -127,7 +131,7 @@ func Main() error {
 		if first {
 			for i := range act.Ints {
 				i := i
-				metrics.NewGauge(
+				vmetrics.NewGauge(
 					fmt.Sprintf("modbus_aqua11c_integer{index=\"i%03d\"}", i),
 					func() float64 {
 						mu.Lock()
@@ -144,7 +148,7 @@ func Main() error {
 		if first {
 			for i := range act.Bits {
 				i := i
-				metrics.NewGauge(
+				vmetrics.NewGauge(
 					fmt.Sprintf("modbus_aqua11c_bit{index=\"b%03d\"}", i),
 					func() float64 {
 						var j float64
@@ -164,7 +168,7 @@ func Main() error {
 		}
 		if i := pre.Bits.DiffIndex(act.Bits); first || i >= 0 {
 			log.Printf("Bits[%02d]: %v", i, act.Bits)
-			if *flagAlertTo != "" {
+			if f.AlertTo != "" {
 				var alert []string
 				for _, ab := range bus.AlertBits {
 					for j := i; j < len(act.Bits); j++ {
@@ -174,8 +178,8 @@ func Main() error {
 					}
 				}
 				if len(alert) != 0 {
-					if err = sendAlert(*flagAlertTo, alert); err != nil {
-						log.Printf("alert to %q: %+v", *flagAlertTo, alert)
+					if err = sendAlert(f.AlertTo, alert); err != nil {
+						log.Printf("alert to %q: %+v", f.AlertTo, alert)
 					}
 				}
 			}
@@ -207,132 +211,26 @@ func sendAlert(to string, alerts []string) error {
 	return smtp.SendMail(hostname+":25", nil, "pcosweb-client@"+hostname, []string{to}, buf.Bytes())
 }
 
-type Bits []bool
-
-func (bs Bits) String() string {
-	var buf strings.Builder
-	for _, b := range bs {
-		if b {
-			buf.WriteByte('1')
-		} else {
-			buf.WriteByte('0')
-		}
-	}
-	return buf.String()
-}
-func (bs Bits) DiffIndex(as Bits) int {
-	if len(as) != len(bs) {
-		return 0
-	}
-	for i, b := range as {
-		if b != bs[i] {
-			return i
-		}
-	}
-	return -1
-}
-
-type Ints []uint16
-
-func (is Ints) String() string {
-	var buf strings.Builder
-	buf.WriteByte('[')
-	for i, u := range is {
-		if i != 0 {
-			buf.WriteByte(' ')
-		}
-		fmt.Fprintf(&buf, "%d", u)
-	}
-	buf.WriteByte(']')
-	return buf.String()
-}
-
-func (is Ints) DiffIndex(js Ints) int {
-	if len(is) != len(js) {
-		return 0
-	}
-	for i, v := range is {
-		if v != js[i] {
-			return i
-		}
-	}
-	return -1
-}
-
-type Map map[string]int16
-
-func (m Map) DiffIndex(n Map, threshold int16) string {
-	if len(m) != len(n) {
-		return ""
-	}
-	for k, v := range m {
-		if u := n[k]; v != u && abs(v)-abs(u) >= threshold {
-			return k
-		}
-	}
-	return ""
-}
-
-type Measurement struct {
-	Map  Map
-	Ints Ints
-	Bits Bits
-}
-
-func (typ PCOType) NewMeasurement() *Measurement {
-	return &Measurement{
-		Map:  make(Map, len(typ.Names)),
-		Ints: make(Ints, typ.Length),
-		Bits: make(Bits, typ.Length),
-	}
-}
-
-type Bus struct {
-	PCOType
-
-	mu sync.Mutex
-	modbus.Client
-	handler *modbus.TCPClientHandler
-}
-
-type PCOType struct {
-	Length      uint16
-	Names, Bits map[uint16]string
-	AlertBits   []uint16
-	AlertNames  []string
-}
-
-var Aqua11c = PCOType{
-	Length: 207,
+var GlenDimplexMapping = metrics.PCOType{
 	Names: map[uint16]string{
-		1:  "Heat engine",
-		2:  "Heat source",
-		3:  "Outside temp",
-		4:  "Puffer temp",
-		6:  "Room1",
-		7:  "Switch %",
-		8:  "Forward temp",
-		9:  "UWW temp",
-		15: "Solar temp",
-		30: "UWW Switch %",
+		1:  "Outside temp",
+		2:  "House temp",
+		3:  "Hot water temp",
+		5:  "Flow (in) temp",
+		8:  "High pressure sensor (bar)",
+		29: "Heating Setpoint",
+		58: "Hot water Setpoint",
+		96: "Heating Power Level (unsure)",
+		71: "Additional Pump (operating hours)",
+		72: "Compressor 1 (operating hours)",
+		73: "Compressor 2 (operating hours)",
+		74: "Fan (operating hours)",
+		76: "Heating Pump (operating hours)",
+		77: "Hot water Pump (operating hours)",
 	},
-	Bits: map[uint16]string{
-		4:  "Planned electric outage",
-		7:  "Forward heating",
-		8:  "UWW",
-		20: "",
-		39: "Heat pump",
-		41: "Source pump?",
-		53: "Source pump",
-		54: "UWW circulation",
-		56: "Make UWW",
-		60: "Solar pump",
-		80: "Preheat",
-	},
-	AlertBits: []uint16{},
 }
 
-func NewBus(host string, typ PCOType) (*Bus, error) {
+func NewBus(host string, typ metrics.PCOType) (*metrics.Bus, error) {
 	handler := modbus.NewTCPClientHandler(host + ":502")
 	handler.Timeout = 10 * time.Second
 	handler.SlaveId = 0x7F
@@ -340,73 +238,5 @@ func NewBus(host string, typ PCOType) (*Bus, error) {
 	if err := handler.Connect(); err != nil {
 		return nil, err
 	}
-	return &Bus{handler: handler, Client: modbus.NewClient(handler), PCOType: typ}, nil
-}
-func (bus *Bus) Close() error {
-	bus.mu.Lock()
-	handler := bus.handler
-	bus.handler = nil
-	bus.mu.Unlock()
-	if handler != nil {
-		return handler.Close()
-	}
-	return nil
-}
-
-func (bus *Bus) Observe(m map[string]int16) error {
-	results, err := bus.Client.ReadInputRegisters(1, 125)
-	for i := 0; i+1 < len(results); i += 2 {
-		nm := bus.Names[uint16(i/2)+1]
-		if nm == "" {
-			continue
-		}
-		m[nm] = int16(binary.BigEndian.Uint16(results[i : i+2]))
-	}
-	return err
-}
-
-func (bus *Bus) Bits(bits []bool) error {
-	results, err := bus.Client.ReadCoils(1, bus.Length)
-	n := 0
-	for i := 0; i+1 < len(results); i += 2 {
-		for k := range []int{1, 0} {
-			res := results[i+k]
-			for j := uint8(0); j < 8; j++ {
-				bits[n] = false
-				if res&(1<<j) != 0 {
-					bits[n] = true
-				}
-				n++
-				if n == len(bits) {
-					return err
-				}
-			}
-		}
-	}
-	return err
-}
-
-func (bus *Bus) Integers(dest []uint16, offset int) error {
-	results, err := bus.Client.ReadDiscreteInputs(uint16(offset)+1, uint16(len(dest)))
-	for i := 0; i+1 < len(results); i += 2 {
-		dest[i/2] = binary.BigEndian.Uint16(results[i : i+2])
-	}
-	return err
-}
-
-func (bus *Bus) Coils(bits []bool, offset int) error {
-	results, err := bus.Client.ReadCoils(uint16(offset)+1, uint16(len(bits)))
-	for i, b := range results {
-		for j := uint(0); j < 8; j++ {
-			bits[uint(i)*8+j] = b&(1<<j) != 0
-		}
-	}
-	return err
-}
-
-func abs(a int16) int16 {
-	if a >= 0 {
-		return a
-	}
-	return -a
+	return &metrics.Bus{Handler: handler, Client: modbus.NewClient(handler), PCOType: typ}, nil
 }

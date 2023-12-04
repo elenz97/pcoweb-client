@@ -1,39 +1,28 @@
-# pcoweb-client: a Carel pCOWeb card ModBus client as a Prometheus metric exporter
-This is a simple ModBus client for Carel [pCOWeb cards](https://www.carel.com/bms-building-management-system-na/-/journal_content/56_INSTANCE_i4q5KIMLInKK/10191/55239).
+| Analogue Bit | Name                              | Description |
+|--------------|-----------------------------------|-------------|
+| 1            | Outside Temperature               |             |
+| 2            | House Temperature                 |             |
+| 3            | Actual Hot Water                  |             |
+| 5            | Flow (in)                         |             |
+| 8            | High-Pressure Sensor (bar)        |             |
+| 29           | Heating Setpoint                  |             |
+| 58           | Hot Water Setpoint                |             |
+| 96           | Heating Power Level (unsure)      |             |
+| 100          | Low-Pressure Sensor (bar)         |             |
+| 71           | Additional Pump (Operating Hours) |             |
+| 72           | Compressor 1 (Operating Hours)    |             |
+| 73           | Compressor 2 (Operating Hours)    |             |
+| 74           | Fan (Operating Hours)             |             |
+| 76           | Heating Pump (Operating Hours)    |             |
+| 77           | Hot Water Pump (Operating Hours)  |             |
 
-It retrieves the ModBus bits and analogue measurements, exposes them as Prometheus metrics,
-and logs the changes.
-
-It is configurable to send an alert email if certain bits has been set.
-
-One configuration is included:
-
-## Rehau Aqua11C
-![Example Grafana screenshot](./contrib/example-aqua11c.png)
-
-| Analogue  | Name  |
-|---|---|
-|  1 | Heat engine temp  |
-|  2 |  Heat source temp |
-|  3 |  Outside temp |
-| 4 | Puffer temp |
-| 6 | Room1 |
-| 7 | Switch % |
-| 8 | Forward temp |
-| 9 | UWW temp |
-| 15 | Solar temp |
-| 30 | UWW Switch % |
-
-| Bit  | Name  |
-|---|---|
-| 7  | Forward heating  |
-| 8  | UWW  |
-| 39  | Heat pump  |
-| 53 | Source pump |
-| 54 | UWW circulation |
-| 56 | Makw UWW |
-| 60 | ERROR |
-
-**WARNING!** This is an *experimental* mapping!
-I've paired the analogue values with the values that can be read on the heat pump,
-and the bits by inspecting the changes in the bit's value and the analogue values.
+| Integer Bit | Name                             | Description |
+|-------------|----------------------------------|-------------|
+| 95          | Generated Heat (kWh)             |             |
+| 1660        | Total Generated Heat (kWh)       |             |
+| 1663        | Total Heating (kWh)              |             |
+| 1675        | Heating (kWh)                    |             |
+| 1681        | Hot Water (kWh)                  |             |
+| 1669        | Total Hot Water (kWh)	           |             |
+| 1647        | Environmental Energy (kWh)       |             |
+| 1644        | Total Environmental Energy (kWh) |             |
