@@ -3,8 +3,9 @@ package metrics
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/tgulacsi/pcoweb-client/pkg/util"
 	"strings"
+
+	"github.com/tgulacsi/pcoweb-client/pkg/util"
 )
 
 func (bs Bits) String() string {
@@ -88,7 +89,7 @@ func (bus *Bus) Close() error {
 }
 
 func (bus *Bus) Integers(dest []uint16, offset int) error {
-	results, err := bus.Client.ReadDiscreteInputs(uint16(offset)+1, uint16(len(dest)))
+	results, err := bus.ReadDiscreteInputs(uint16(offset)+1, uint16(len(dest)))
 	for i := 0; i+1 < len(results); i += 2 {
 		dest[i/2] = binary.BigEndian.Uint16(results[i : i+2])
 	}
@@ -96,7 +97,7 @@ func (bus *Bus) Integers(dest []uint16, offset int) error {
 }
 
 func (bus *Bus) Coils(bits []bool, offset int) error {
-	results, err := bus.Client.ReadCoils(uint16(offset)+1, uint16(len(bits)))
+	results, err := bus.ReadCoils(uint16(offset)+1, uint16(len(bits)))
 	for i, b := range results {
 		for j := uint(0); j < 8; j++ {
 			bits[uint(i)*8+j] = b&(1<<j) != 0
@@ -106,7 +107,7 @@ func (bus *Bus) Coils(bits []bool, offset int) error {
 }
 
 func (bus *Bus) Observe(m map[string]int16) error {
-	results, err := bus.Client.ReadInputRegisters(1, 125)
+	results, err := bus.ReadInputRegisters(1, 125)
 	for i := 0; i+1 < len(results); i += 2 {
 		nm := bus.Names[uint16(i/2)+1]
 		if nm == "" {
@@ -118,7 +119,7 @@ func (bus *Bus) Observe(m map[string]int16) error {
 }
 
 func (bus *Bus) Bits(bits []bool) error {
-	results, err := bus.Client.ReadCoils(1, bus.Length)
+	results, err := bus.ReadCoils(1, bus.Length)
 	n := 0
 	for i := 0; i+1 < len(results); i += 2 {
 		for k := range []int{1, 0} {

@@ -20,10 +20,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	vmetrics "github.com/VictoriaMetrics/metrics"
-	"github.com/spf13/pflag"
-	"github.com/tgulacsi/pcoweb-client/pkg/config"
-	"github.com/tgulacsi/pcoweb-client/pkg/metrics"
 	"log"
 	"net/http"
 	"net/smtp"
@@ -32,6 +28,11 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	vmetrics "github.com/VictoriaMetrics/metrics"
+	"github.com/spf13/pflag"
+	"github.com/tgulacsi/pcoweb-client/pkg/config"
+	"github.com/tgulacsi/pcoweb-client/pkg/metrics"
 
 	_ "net/http/pprof"
 
@@ -125,41 +126,45 @@ func run() error {
 			}
 		}
 
-		if err = bus.Integers(act.Ints, 0); err != nil {
-			return err
-		}
-		if first {
-			for i := range act.Ints {
-				i := i
-				vmetrics.NewGauge(
-					fmt.Sprintf("modbus_aqua11c_integer{index=\"i%03d\"}", i),
-					func() float64 {
-						mu.Lock()
-						v := act.Ints[i]
-						mu.Unlock()
-						return float64(v)
-					})
+		if len(act.Ints) > 0 {
+			if err = bus.Integers(act.Ints, 0); err != nil {
+				return err
+			}
+			if first {
+				for i := range act.Ints {
+					i := i
+					vmetrics.NewGauge(
+						fmt.Sprintf("modbus_aqua11c_integer{index=\"i%03d\"}", i),
+						func() float64 {
+							mu.Lock()
+							v := act.Ints[i]
+							mu.Unlock()
+							return float64(v)
+						})
+				}
 			}
 		}
 
-		if err = bus.Bits(act.Bits); err != nil {
-			return err
-		}
-		if first {
-			for i := range act.Bits {
-				i := i
-				vmetrics.NewGauge(
-					fmt.Sprintf("modbus_aqua11c_bit{index=\"b%03d\"}", i),
-					func() float64 {
-						var j float64
-						mu.Lock()
-						b := act.Bits[i]
-						mu.Unlock()
-						if b {
-							j = 1
-						}
-						return j
-					})
+		if len(act.Bits) > 0 {
+			if err = bus.Bits(act.Bits); err != nil {
+				return err
+			}
+			if first {
+				for i := range act.Bits {
+					i := i
+					vmetrics.NewGauge(
+						fmt.Sprintf("modbus_aqua11c_bit{index=\"b%03d\"}", i),
+						func() float64 {
+							var j float64
+							mu.Lock()
+							b := act.Bits[i]
+							mu.Unlock()
+							if b {
+								j = 1
+							}
+							return j
+						})
+				}
 			}
 		}
 
