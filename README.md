@@ -1,6 +1,20 @@
-Values taken from https://<pcoweb-client>/config/adminpage.html and https://<pcoweb-client>/http/
+# pcoweb-client
 
-## Analog Variables
+Prometheus exporter for Glen Dimplex heat pumps
+
+## Usage
+
+```shell
+Usage of pcoweb-client:
+      --host string           modbus host to connect to
+      --metrics-port string   metrics address to listen on (default ":9112")
+```
+
+## Metrics
+
+Below values are (roughly mapped, errors not to be ruled out) taken from `https://pcoweb-client-address/config/adminpage.html` and `https://pcoweb-client-address/http/`
+
+### Analog Variables
 
 | Analogue Bit | Name                              | Description |
 |--------------|-----------------------------------|-------------|
@@ -21,7 +35,7 @@ Values taken from https://<pcoweb-client>/config/adminpage.html and https://<pco
 | 76           | Heating Pump (Operating Hours)    |             |
 | 77           | Hot Water Pump (Operating Hours)  |             |
 
-## Integer Variables
+### Integer Variables
 
 | Integer Bit | Name                             | Description |
 |-------------|----------------------------------|-------------|
