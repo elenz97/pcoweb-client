@@ -1,3 +1,7 @@
+Values taken from https://<pcoweb-client>/config/adminpage.html and https://<pcoweb-client>/http/
+
+## Analog Variables
+
 | Analogue Bit | Name                              | Description |
 |--------------|-----------------------------------|-------------|
 | 1            | Outside Temperature               |             |
@@ -6,6 +10,7 @@
 | 5            | Flow (in)                         |             |
 | 8            | High-Pressure Sensor (bar)        |             |
 | 29           | Heating Setpoint                  |             |
+| 53           | Heating Goal Temperature          |             |
 | 58           | Hot Water Setpoint                |             |
 | 96           | Heating Power Level (unsure)      |             |
 | 100          | Low-Pressure Sensor (bar)         |             |
@@ -15,6 +20,8 @@
 | 74           | Fan (Operating Hours)             |             |
 | 76           | Heating Pump (Operating Hours)    |             |
 | 77           | Hot Water Pump (Operating Hours)  |             |
+
+## Integer Variables
 
 | Integer Bit | Name                             | Description |
 |-------------|----------------------------------|-------------|

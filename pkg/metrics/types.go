@@ -1,20 +1,22 @@
 package metrics
 
 import (
-	"github.com/goburrow/modbus"
 	"sync"
+
+	"github.com/goburrow/modbus"
 )
 
-type Ints []uint16
+type IntegerVariables []uint16
 
-type Map map[string]int16
+type AnalogVariables map[string]int16
 
-type Bits []bool
+type DigitalVariables []bool
 
 type Measurement struct {
-	Map  Map
-	Ints Ints
-	Bits Bits
+	AnalogVariables  AnalogVariables
+	IntegerVariables IntegerVariables
+	// aka "Bits"
+	DigitialVariables DigitalVariables
 }
 
 type Bus struct {

@@ -16,13 +16,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"net/smtp"
 	"os"
 	"os/signal"
 	"sync"
@@ -30,6 +28,7 @@ import (
 	"time"
 
 	vmetrics "github.com/VictoriaMetrics/metrics"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/tgulacsi/pcoweb-client/pkg/config"
 	"github.com/tgulacsi/pcoweb-client/pkg/metrics"
@@ -40,8 +39,6 @@ import (
 
 	"github.com/goburrow/modbus"
 )
-
-var hostname string
 
 func main() {
 	if err := run(); err != nil {
@@ -60,11 +57,8 @@ func run() error {
 		metricsAddr = f.MetricsAddr
 	}
 
-	bus, err := NewBus(f.Host, GlenDimplexMapping)
+	bus, err := NewBus(f.Host, metrics.GlenDimplexAnalogVariablesMapping)
 	if err != nil {
-		return err
-	}
-	if hostname, err = os.Hostname(); err != nil {
 		return err
 	}
 
@@ -87,22 +81,22 @@ func run() error {
 			_ = p.Signal(sig)
 		}
 	}()
-	grp, ctx := errgroup.WithContext(ctx)
+	errgroup, ctx := errgroup.WithContext(ctx)
 
 	http.HandleFunc("/metrics", func(w http.ResponseWriter, req *http.Request) {
 		vmetrics.WritePrometheus(w, true)
 	})
-	grp.Go(func() error {
+
+	errgroup.Go(func() error {
 		return http.ListenAndServe(metricsAddr, nil)
 	})
 
-	var mu sync.Mutex
-	act := GlenDimplexMapping.NewMeasurement()
-	pre := GlenDimplexMapping.NewMeasurement()
+	var mutex sync.Mutex
+	measurement := metrics.GlenDimplexAnalogVariablesMapping.NewMeasurement()
 
 	interval := 10 * time.Second
-	tick := time.NewTicker(interval)
-	first := true
+	ticker := time.NewTicker(interval)
+	initialRun := true
 
 	for {
 		select {
@@ -110,55 +104,55 @@ func run() error {
 			return ctx.Err()
 		default:
 		}
-		if err = bus.Observe(act.Map); err != nil {
+		if err = bus.Observe(measurement.AnalogVariables); err != nil {
 			return err
 		}
-		if first {
-			for k := range act.Map {
-				k := k
-				vmetrics.NewGauge(fmt.Sprintf("modbus_aqua11c_analogue{name=%q}", k),
+		if initialRun {
+			for k := range measurement.AnalogVariables {
+				vmetrics.NewGauge(fmt.Sprintf("modbus_glendimplex_analog{name=%q}", k),
 					func() float64 {
-						mu.Lock()
-						v := float64(act.Map[k]) / 10.0
-						mu.Unlock()
+						mutex.Lock()
+						v := float64(measurement.AnalogVariables[k]) / 10.0
+						mutex.Unlock()
+
 						return v
 					})
 			}
 		}
 
-		if len(act.Ints) > 0 {
-			if err = bus.Integers(act.Ints, 0); err != nil {
+		if len(measurement.IntegerVariables) > 0 {
+			if err = bus.Integers(measurement.IntegerVariables, 0); err != nil {
 				return err
 			}
-			if first {
-				for i := range act.Ints {
+			if initialRun {
+				for i := range measurement.IntegerVariables {
 					i := i
 					vmetrics.NewGauge(
-						fmt.Sprintf("modbus_aqua11c_integer{index=\"i%03d\"}", i),
+						fmt.Sprintf("modbus_glendimplex_integer{index=\"i%03d\"}", i),
 						func() float64 {
-							mu.Lock()
-							v := act.Ints[i]
-							mu.Unlock()
+							mutex.Lock()
+							v := measurement.IntegerVariables[i]
+							mutex.Unlock()
 							return float64(v)
 						})
 				}
 			}
 		}
 
-		if len(act.Bits) > 0 {
-			if err = bus.Bits(act.Bits); err != nil {
+		if len(measurement.DigitialVariables) > 0 {
+			if err = bus.Bits(measurement.DigitialVariables); err != nil {
 				return err
 			}
-			if first {
-				for i := range act.Bits {
+			if initialRun {
+				for i := range measurement.DigitialVariables {
 					i := i
 					vmetrics.NewGauge(
-						fmt.Sprintf("modbus_aqua11c_bit{index=\"b%03d\"}", i),
+						fmt.Sprintf("modbus_glendimplex_digital{index=\"b%03d\"}", i),
 						func() float64 {
 							var j float64
-							mu.Lock()
-							b := act.Bits[i]
-							mu.Unlock()
+							mutex.Lock()
+							b := measurement.DigitialVariables[i]
+							mutex.Unlock()
 							if b {
 								j = 1
 							}
@@ -168,78 +162,25 @@ func run() error {
 			}
 		}
 
-		if i := pre.Ints.DiffIndex(act.Ints); first || i >= 0 {
-			log.Printf("Ints[%d]: %v", i, act.Ints)
+		if initialRun {
+			logrus.Printf("exporting %d (analog), %d (integer), %d (digital/bits) metrics",
+				len(measurement.AnalogVariables), len(measurement.IntegerVariables), len(measurement.DigitialVariables))
 		}
-		if i := pre.Bits.DiffIndex(act.Bits); first || i >= 0 {
-			log.Printf("Bits[%02d]: %v", i, act.Bits)
-			if f.AlertTo != "" {
-				var alert []string
-				for _, ab := range bus.AlertBits {
-					for j := i; j < len(act.Bits); j++ {
-						if j == int(ab) && act.Bits[j] {
-							alert = append(alert, bus.PCOType.Bits[ab])
-						}
-					}
-				}
-				if len(alert) != 0 {
-					if err = sendAlert(f.AlertTo, alert); err != nil {
-						log.Printf("alert to %q: %+v", f.AlertTo, alert)
-					}
-				}
-			}
-		}
-		if k := pre.Map.DiffIndex(act.Map, 3); first || k != "" {
-			log.Printf("Map[%q]=%d: %v", k, act.Map[k], act.Map)
-		}
-		first = false
+		initialRun = false
 
-		mu.Lock()
-		pre, act = act, pre
-		mu.Unlock()
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-tick.C:
+		case <-ticker.C:
 		}
 	}
-}
-
-func sendAlert(to string, alerts []string) error {
-	var buf bytes.Buffer
-	buf.WriteString("Subject: ALERT\r\n\r\n")
-	for _, alert := range alerts {
-		buf.WriteString(alert)
-		buf.WriteString("\r\n")
-	}
-	log.Printf("connecting to %q", hostname)
-	return smtp.SendMail(hostname+":25", nil, "pcosweb-client@"+hostname, []string{to}, buf.Bytes())
-}
-
-var GlenDimplexMapping = metrics.PCOType{
-	Names: map[uint16]string{
-		1:  "Outside temp",
-		2:  "House temp",
-		3:  "Hot water temp",
-		5:  "Flow (in) temp",
-		8:  "High pressure sensor (bar)",
-		29: "Heating Setpoint",
-		58: "Hot water Setpoint",
-		96: "Heating Power Level (unsure)",
-		71: "Additional Pump (operating hours)",
-		72: "Compressor 1 (operating hours)",
-		73: "Compressor 2 (operating hours)",
-		74: "Fan (operating hours)",
-		76: "Heating Pump (operating hours)",
-		77: "Hot water Pump (operating hours)",
-	},
 }
 
 func NewBus(host string, typ metrics.PCOType) (*metrics.Bus, error) {
 	handler := modbus.NewTCPClientHandler(host + ":502")
 	handler.Timeout = 10 * time.Second
 	handler.SlaveId = 0x7F
-	//handler.Logger = log.New(os.Stdout, "test: ", log.LstdFlags)
+
 	if err := handler.Connect(); err != nil {
 		return nil, err
 	}

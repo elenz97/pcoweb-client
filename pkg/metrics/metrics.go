@@ -4,11 +4,29 @@ import (
 	"encoding/binary"
 	"fmt"
 	"strings"
-
-	"github.com/tgulacsi/pcoweb-client/pkg/util"
 )
 
-func (bs Bits) String() string {
+var GlenDimplexAnalogVariablesMapping = PCOType{
+	Names: map[uint16]string{
+		1:  "Outside temp",
+		2:  "House temp",
+		3:  "Hot water temp",
+		5:  "Flow (in) temp",
+		8:  "High pressure sensor (bar)",
+		29: "Heating Setpoint",
+		53: "Heating Goal Temperature",
+		58: "Hot water Setpoint",
+		96: "Heating Power Level (unsure)",
+		71: "Additional Pump (operating hours)",
+		72: "Compressor 1 (operating hours)",
+		73: "Compressor 2 (operating hours)",
+		74: "Fan (operating hours)",
+		76: "Heating Pump (operating hours)",
+		77: "Hot water Pump (operating hours)",
+	},
+}
+
+func (bs DigitalVariables) String() string {
 	var buf strings.Builder
 	for _, b := range bs {
 		if b {
@@ -20,7 +38,7 @@ func (bs Bits) String() string {
 	return buf.String()
 }
 
-func (bs Bits) DiffIndex(as Bits) int {
+func (bs DigitalVariables) DiffIndex(as DigitalVariables) int {
 	if len(as) != len(bs) {
 		return 0
 	}
@@ -32,7 +50,7 @@ func (bs Bits) DiffIndex(as Bits) int {
 	return -1
 }
 
-func (is Ints) String() string {
+func (is IntegerVariables) String() string {
 	var buf strings.Builder
 	buf.WriteByte('[')
 	for i, u := range is {
@@ -45,7 +63,7 @@ func (is Ints) String() string {
 	return buf.String()
 }
 
-func (is Ints) DiffIndex(js Ints) int {
+func (is IntegerVariables) DiffIndex(js IntegerVariables) int {
 	if len(is) != len(js) {
 		return 0
 	}
@@ -57,23 +75,11 @@ func (is Ints) DiffIndex(js Ints) int {
 	return -1
 }
 
-func (m Map) DiffIndex(n Map, threshold int16) string {
-	if len(m) != len(n) {
-		return ""
-	}
-	for k, v := range m {
-		if u := n[k]; v != u && util.Abs(v)-util.Abs(u) >= threshold {
-			return k
-		}
-	}
-	return ""
-}
-
 func (typ PCOType) NewMeasurement() *Measurement {
 	return &Measurement{
-		Map:  make(Map, len(typ.Names)),
-		Ints: make(Ints, typ.Length),
-		Bits: make(Bits, typ.Length),
+		AnalogVariables:   make(AnalogVariables, len(typ.Names)),
+		IntegerVariables:  make(IntegerVariables, typ.Length),
+		DigitialVariables: make(DigitalVariables, typ.Length),
 	}
 }
 
