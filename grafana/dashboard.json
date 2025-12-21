@@ -1,0 +1,430 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "af7rqnnls4e0wf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "hours"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Fan (operating hours)\"} * 10 ",
+          "legendFormat": "Ventilator / Fan",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Compressor 1 (operating hours)\"} * 10",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Kompressor 1 / Compressor 1",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Compressor 2 (operating hours)\"} * 10",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Kompressor 2 / Kompressor 2",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Heating Pump (operating hours)\"} * 10",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Heating Pump / Wärmepumpe",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Hot water Pump (operating hours)\"} * 10",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Warmwasserpumpe / Hot water Pump",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Additional Pump (operating hours)\"} * 10",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Zusatzpumpe / Additional Pump",
+          "range": true,
+          "refId": "F"
+        }
+      ],
+      "title": "Operating Hours",
+      "transparent": true,
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "af7rqnnls4e0wf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 13,
+        "x": 0,
+        "y": 6
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Heating Goal Temperature\"}",
+          "legendFormat": "Zieltemperatur / Heating Goal",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Flow (in) temp\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Vorlauf / Flow",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Return / House temp\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Rücklauf / Return",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Outside temp\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Außentemperatur / Outside temp",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Hot water temp\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Warmwasser / Domestic hot water",
+          "range": true,
+          "refId": "E"
+        }
+      ],
+      "title": "Sensors",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "af7rqnnls4e0wf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "pressurebar"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 11,
+        "x": 13,
+        "y": 6
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"High pressure sensor (bar)\"}",
+          "legendFormat": "Hochdrucksensor / High Pressure Sensor",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "modbus_glendimplex_analog{name=\"Low-Pressure Sensor (bar)\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Niedrdrucksensor / Low Pressure Sensor",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Pressures",
+      "transparent": true,
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "5s",
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Glen Dimplex Heat Pump",
+  "uid": "adbtfct",
+  "version": 19
+}
