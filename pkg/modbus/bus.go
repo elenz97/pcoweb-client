@@ -31,8 +31,10 @@ func (bus *Bus) Close() error {
 	return nil
 }
 
+// Read from holding registers:
+// https://dimplex.atlassian.net/wiki/spaces/DW/pages/3303571457/Modbus+TCP+Anbindung#4-Unterst%C3%BCtze-Funktionscodes
 func (bus *Bus) Observe(metrics map[metrics.GlenDimplexAnalogVariableName]int16) error {
-	results, err := bus.ReadInputRegisters(1, 125)
+	results, err := bus.ReadHoldingRegisters(1, 125)
 	for i := 0; i+1 < len(results); i += 2 {
 		nm := bus.Names[uint16(i/2)+1]
 		if nm == "" {

@@ -21,6 +21,10 @@ type Metrics struct {
 	HeatingPumpOperatingHours    prom.Gauge
 	HotWaterPumpOperatingHours   prom.Gauge
 	LowPressureSensorBar         prom.Gauge
+	HeatingSetpoint2             prom.Gauge
+	HeatingSetpoint3             prom.Gauge
+	SecondHeaterOperatingHours   prom.Gauge
+	FlangeHeaterOperatingHours   prom.Gauge
 }
 
 func (vars GlenDimplexAnalogVariables) NewMeasurement() *Measurement {
@@ -38,6 +42,8 @@ const (
 	GlenDimplexAnalogVariableFlowInTemperature            GlenDimplexAnalogVariableName = "FlowInTemperature"
 	GlenDimplexAnalogVariableHighPressureSensorBar        GlenDimplexAnalogVariableName = "HighPressureSensorBar"
 	GlenDimplexAnalogVariableHeatingSetpoint              GlenDimplexAnalogVariableName = "HeatingSetpoint"
+	GlenDimplexAnalogVariableHeatingSetpoint2             GlenDimplexAnalogVariableName = "HeatingSetpoint2"
+	GlenDimplexAnalogVariableHeatingSetpoint3             GlenDimplexAnalogVariableName = "HeatingSetpoint3"
 	GlenDimplexAnalogVariableHeatingGoalTemperature       GlenDimplexAnalogVariableName = "HeatingGoalTemperature"
 	GlenDimplexAnalogVariableHotWaterSetpoint             GlenDimplexAnalogVariableName = "HotWaterSetpoint"
 	GlenDimplexAnalogVariableHeatingPowerLevel            GlenDimplexAnalogVariableName = "HeatingPowerLevel"
@@ -48,25 +54,49 @@ const (
 	GlenDimplexAnalogVariableHeatingPumpOperatingHours    GlenDimplexAnalogVariableName = "HeatingPumpOperatingHours"
 	GlenDimplexAnalogVariableHotWaterPumpOperatingHours   GlenDimplexAnalogVariableName = "HotWaterPumpOperatingHours"
 	GlenDimplexAnalogVariableLowPressureSensorBar         GlenDimplexAnalogVariableName = "LowPressureSensorBar"
+	GlenDimplexAnalogVariableSecondHeaterOperatingHours   GlenDimplexAnalogVariableName = "SecondHeaterOperatingHours"
+	GlenDimplexAnalogVariableFlangeHeaterOperatingHours   GlenDimplexAnalogVariableName = "FlangeHeaterOperatingHours"
 )
 
 var GlenDimplexAnalogVariablesMapping = GlenDimplexAnalogVariables{
 	Names: map[uint16]GlenDimplexAnalogVariableName{
-		1:   GlenDimplexAnalogVariableOutsideTemperature,
-		2:   GlenDimplexAnalogVariableReturnTemperature,
-		3:   GlenDimplexAnalogVariableHotWaterTemperature,
-		5:   GlenDimplexAnalogVariableFlowInTemperature,
-		8:   GlenDimplexAnalogVariableHighPressureSensorBar,
-		29:  GlenDimplexAnalogVariableHeatingSetpoint,
-		53:  GlenDimplexAnalogVariableHeatingGoalTemperature,
-		58:  GlenDimplexAnalogVariableHotWaterSetpoint,
-		96:  GlenDimplexAnalogVariableHeatingPowerLevel,
-		71:  GlenDimplexAnalogVariableAdditionalPumpOperatingHours,
-		72:  GlenDimplexAnalogVariableCompressor1OperatingHours,
-		73:  GlenDimplexAnalogVariableCompressor2OperatingHours,
-		74:  GlenDimplexAnalogVariableFanOperatingHours,
-		76:  GlenDimplexAnalogVariableHeatingPumpOperatingHours,
-		77:  GlenDimplexAnalogVariableHotWaterPumpOperatingHours,
+		// Service Data / Betriebsdaten https://dimplex.atlassian.net/wiki/x/zYHox
+		// (R1) Außentemperatur / Outside temperature
+		1: GlenDimplexAnalogVariableOutsideTemperature,
+		// (R2) Temperatur Ruecklauf / Return temperature
+		2: GlenDimplexAnalogVariableReturnTemperature,
+		// (R3) Temperatur Warmwasser / Hot water temperature
+		3: GlenDimplexAnalogVariableHotWaterTemperature,
+		// (R9) Temperatur Vorlauf / Flow in temperature
+		5:  GlenDimplexAnalogVariableFlowInTemperature,
+		8:  GlenDimplexAnalogVariableHighPressureSensorBar,
+		29: GlenDimplexAnalogVariableHeatingSetpoint,
+		53: GlenDimplexAnalogVariableHeatingGoalTemperature,
+		// Solltemperatur 2.Heizkreis / Desired temperature 2nd heating circuit
+		54: GlenDimplexAnalogVariableHeatingSetpoint2,
+		// Solltemperatur 3.Heizkreis / Desired temperature 3rd heating circuit
+		55: GlenDimplexAnalogVariableHeatingSetpoint3,
+		// Temperatur Warmwassersoll
+		58: GlenDimplexAnalogVariableHotWaterSetpoint,
+		96: GlenDimplexAnalogVariableHeatingPowerLevel,
+		// Operating hours / Betriebsstunden
+		// https://dimplex.atlassian.net/wiki/x/AYAqxw
+		// (M16) Zusatzumwälzpumpe / Additional water pump
+		71: GlenDimplexAnalogVariableAdditionalPumpOperatingHours,
+		// Verdichter 1 / Compressor 1
+		72: GlenDimplexAnalogVariableCompressor1OperatingHours,
+		// Verdichter 2 / Compressor 2
+		73: GlenDimplexAnalogVariableCompressor2OperatingHours,
+		// (M11) Primärpumpe - Ventilator / Primary pump - fan
+		74: GlenDimplexAnalogVariableFanOperatingHours,
+		// (E10) 2. Wärmeerzeuger / 2nd heater
+		75: GlenDimplexAnalogVariableSecondHeaterOperatingHours,
+		// (M13) Heizungspumpe / Heat pump
+		76: GlenDimplexAnalogVariableHeatingPumpOperatingHours,
+		// (M18) Warmwasserpumpe / Hot water pump
+		77: GlenDimplexAnalogVariableHotWaterPumpOperatingHours,
+		// (E9) Flanschheizung / Flange heater
+		78:  GlenDimplexAnalogVariableFlangeHeaterOperatingHours,
 		101: GlenDimplexAnalogVariableLowPressureSensorBar,
 	},
 }
@@ -234,6 +264,38 @@ func NewMetrics(reg prom.Registerer) *Metrics {
 		},
 	})
 
+	heatingSetpoint2 := prom.NewGauge(prom.GaugeOpts{
+		Namespace:   namespace,
+		Subsystem:   subsystemAnalog,
+		Name:        "heating_setpoint2",
+		Help:        "Heating setpoint 2 in degrees Celsius",
+		ConstLabels: prom.Labels{},
+	})
+
+	heatingSetpoint3 := prom.NewGauge(prom.GaugeOpts{
+		Namespace:   namespace,
+		Subsystem:   subsystemAnalog,
+		Name:        "heating_setpoint3",
+		Help:        "Heating setpoint 3 in degrees Celsius",
+		ConstLabels: prom.Labels{},
+	})
+
+	secondHeaterOperatingHours := prom.NewGauge(prom.GaugeOpts{
+		Namespace:   namespace,
+		Subsystem:   subsystemAnalog,
+		Name:        "second_heater_operating_hours",
+		Help:        "Second heater operating hours in hours",
+		ConstLabels: prom.Labels{},
+	})
+
+	flangeHeaterOperatingHours := prom.NewGauge(prom.GaugeOpts{
+		Namespace:   namespace,
+		Subsystem:   subsystemAnalog,
+		Name:        "flange_heater_operating_hours",
+		Help:        "Flange heater operating hours in hours",
+		ConstLabels: prom.Labels{},
+	})
+
 	reg.MustRegister(outsideTemperature,
 		returnTemperature,
 		hotWaterTemperature,
@@ -249,7 +311,11 @@ func NewMetrics(reg prom.Registerer) *Metrics {
 		fanOperatingHours,
 		heatingPumpOperatingHours,
 		hotWaterPumpOperatingHours,
-		lowPressureSensorBar)
+		lowPressureSensorBar,
+		heatingSetpoint2,
+		heatingSetpoint3,
+		secondHeaterOperatingHours,
+		flangeHeaterOperatingHours)
 
 	return &Metrics{
 		OutsideTemperature:           outsideTemperature,
@@ -268,11 +334,23 @@ func NewMetrics(reg prom.Registerer) *Metrics {
 		HeatingPumpOperatingHours:    heatingPumpOperatingHours,
 		HotWaterPumpOperatingHours:   hotWaterPumpOperatingHours,
 		LowPressureSensorBar:         lowPressureSensorBar,
+		HeatingSetpoint2:             heatingSetpoint2,
+		HeatingSetpoint3:             heatingSetpoint3,
+		SecondHeaterOperatingHours:   secondHeaterOperatingHours,
+		FlangeHeaterOperatingHours:   flangeHeaterOperatingHours,
 	}
 }
 
 func RecordAnalogMetrics(analogVar GlenDimplexAnalogVariableName, m *Metrics, measurement *Measurement) {
 	switch analogVar {
+	case GlenDimplexAnalogVariableHeatingSetpoint2:
+		m.HeatingSetpoint2.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableHeatingSetpoint3:
+		m.HeatingSetpoint3.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableSecondHeaterOperatingHours:
+		m.SecondHeaterOperatingHours.Set(float64(measurement.AnalogVariables[analogVar]))
+	case GlenDimplexAnalogVariableFlangeHeaterOperatingHours:
+		m.FlangeHeaterOperatingHours.Set(float64(measurement.AnalogVariables[analogVar]))
 	case GlenDimplexAnalogVariableOutsideTemperature:
 		m.OutsideTemperature.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
 	case GlenDimplexAnalogVariableReturnTemperature:
