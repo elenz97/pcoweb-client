@@ -17,7 +17,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 0,
   "links": [],
   "panels": [
@@ -29,8 +29,187 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "fixed"
+            "mode": "palette-classic"
           },
+          "custom": {
+            "axisBorderShow": true,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "fieldMinMax": false,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 16,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Min",
+          "sortDesc": false
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "glendimplex_analog_heating_goal_temperature",
+          "legendFormat": "Zieltemperatur / Heating Goal",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "glendimplex_analog_flow_in_temperature",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Vorlauf / Flow",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "glendimplex_analog_return_temperature",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Rücklauf / Return",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "glendimplex_analog_outside_temperature",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Außentemperatur / Outside temp",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "af7rqnnls4e0wf"
+          },
+          "editorMode": "code",
+          "expr": "glendimplex_analog_hot_water_temperature",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "Warmwasser / Domestic hot water",
+          "range": true,
+          "refId": "E"
+        }
+      ],
+      "title": "Sensors",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "",
+        "mode": "markdown"
+      },
+      "pluginVersion": "12.3.1",
+      "title": "Betriebsstunden / Operating Hours",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "uid": "af7rqnnls4e0wf"
+      },
+      "fieldConfig": {
+        "defaults": {
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -46,16 +225,18 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 24,
-        "x": 0,
-        "y": 0
+        "h": 2,
+        "w": 8,
+        "x": 16,
+        "y": 2
       },
-      "id": 1,
+      "id": 7,
       "options": {
-        "minVizHeight": 75,
-        "minVizWidth": 75,
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -63,139 +244,31 @@
           "fields": "",
           "values": false
         },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
           "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Fan (operating hours)\"} * 10 ",
-          "legendFormat": "Ventilator / Fan",
+          "expr": "glendimplex_analog_heating_pump_operating_hours",
+          "legendFormat": "Wärmepumpe / Heatpump",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Compressor 1 (operating hours)\"} * 10",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Kompressor 1 / Compressor 1",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Compressor 2 (operating hours)\"} * 10",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Kompressor 2 / Kompressor 2",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Heating Pump (operating hours)\"} * 10",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Heating Pump / Wärmepumpe",
-          "range": true,
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Hot water Pump (operating hours)\"} * 10",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Warmwasserpumpe / Hot water Pump",
-          "range": true,
-          "refId": "E"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Additional Pump (operating hours)\"} * 10",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Zusatzpumpe / Additional Pump",
-          "range": true,
-          "refId": "F"
         }
       ],
-      "title": "Operating Hours",
+      "title": "",
       "transparent": true,
-      "type": "gauge"
+      "type": "stat"
     },
     {
       "datasource": {
-        "type": "prometheus",
         "uid": "af7rqnnls4e0wf"
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 1,
-          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -203,102 +276,287 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
-          "unit": "celsius"
+          "unit": "hours"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 13,
-        "x": 0,
-        "y": 6
+        "h": 3,
+        "w": 2,
+        "x": 16,
+        "y": 4
       },
-      "id": 2,
+      "id": 1,
       "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.3.1",
       "targets": [
         {
           "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Heating Goal Temperature\"}",
-          "legendFormat": "Zieltemperatur / Heating Goal",
+          "expr": "glendimplex_analog_fan_operating_hours",
+          "legendFormat": "Ventilator / Fan",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Flow (in) temp\"}",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Vorlauf / Flow",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Return / House temp\"}",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Rücklauf / Return",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Outside temp\"}",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Außentemperatur / Outside temp",
-          "range": true,
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "af7rqnnls4e0wf"
-          },
-          "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Hot water temp\"}",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "Warmwasser / Domestic hot water",
-          "range": true,
-          "refId": "E"
         }
       ],
-      "title": "Sensors",
+      "title": "",
       "transparent": true,
-      "type": "timeseries"
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "af7rqnnls4e0wf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "hours"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 18,
+        "y": 4
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "glendimplex_analog_additional_pump_operating_hours",
+          "legendFormat": "Zusatzpumpe / Additional pump",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "af7rqnnls4e0wf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "hours"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 22,
+        "y": 4
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "glendimplex_analog_compressor2_operating_hours",
+          "legendFormat": "Compressor 2",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "af7rqnnls4e0wf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "hours"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 16,
+        "y": 7
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "glendimplex_analog_hot_water_pump_operating_hours",
+          "legendFormat": "Warmwasserpumpe / Hot water pump",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "af7rqnnls4e0wf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "hours"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 22,
+        "y": 7
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "glendimplex_analog_compressor1_operating_hours",
+          "legendFormat": "Compressor 1",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "transparent": true,
+      "type": "stat"
     },
     {
       "datasource": {
@@ -319,23 +577,26 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
+            "fillOpacity": 5,
+            "gradientMode": "opacity",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "auto",
             "showValues": false,
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -352,10 +613,6 @@
               {
                 "color": "green",
                 "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           },
@@ -364,30 +621,34 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 11,
-        "x": 13,
-        "y": 6
+        "h": 11,
+        "w": 16,
+        "x": 0,
+        "y": 12
       },
       "id": 3,
       "options": {
         "legend": {
-          "calcs": [],
+          "calcs": [
+            "min",
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true
         },
         "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
+          "hideZeros": true,
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "pluginVersion": "12.3.1",
       "targets": [
         {
           "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"High pressure sensor (bar)\"}",
+          "expr": "glendimplex_analog_high_pressure_sensor_bar",
           "legendFormat": "Hochdrucksensor / High Pressure Sensor",
           "range": true,
           "refId": "A"
@@ -398,7 +659,7 @@
             "uid": "af7rqnnls4e0wf"
           },
           "editorMode": "code",
-          "expr": "modbus_glendimplex_analog{name=\"Low-Pressure Sensor (bar)\"}",
+          "expr": "glendimplex_analog_low_pressure_sensor_bar",
           "hide": false,
           "instant": false,
           "legendFormat": "Niedrdrucksensor / Low Pressure Sensor",
@@ -411,7 +672,7 @@
       "type": "timeseries"
     }
   ],
-  "preload": false,
+  "preload": true,
   "refresh": "5s",
   "schemaVersion": 42,
   "tags": [],
@@ -419,12 +680,12 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Glen Dimplex Heat Pump",
   "uid": "adbtfct",
-  "version": 19
+  "version": 39
 }

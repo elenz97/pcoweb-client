@@ -16,173 +16,80 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"fmt"
-	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
 	"time"
 
-	vmetrics "github.com/VictoriaMetrics/metrics"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
-	"github.com/tgulacsi/pcoweb-client/pkg/config"
-	"github.com/tgulacsi/pcoweb-client/pkg/metrics"
-
-	_ "net/http/pprof"
-
-	"golang.org/x/sync/errgroup"
-
-	"github.com/goburrow/modbus"
+	"github.com/elenz97/pcoweb-client/pkg/metrics"
+	"github.com/elenz97/pcoweb-client/pkg/modbus"
+	prom "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func main() {
-	if err := run(); err != nil {
-		log.Fatalf("%+v", err)
-	}
+type Config struct {
+	Host        string
+	MetricsAddr string
 }
 
-func run() error {
-	f := &config.Flags{}
-	f.Bind(pflag.CommandLine)
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	pflag.Parse()
+func (c *Config) Bind(fs *flag.FlagSet) {
+	fs.StringVar(&c.Host, "host", "", "Modbus host")
+	fs.StringVar(&c.MetricsAddr, "metrics-addr", ":9112", "Metrics address")
+}
+
+func main() {
+	var cfg Config
+	cfg.Bind(flag.CommandLine)
+	flag.Parse()
 
 	metricsAddr := ":9112"
-	if f.MetricsAddr != "" {
-		metricsAddr = f.MetricsAddr
+	if cfg.MetricsAddr != "" {
+		metricsAddr = cfg.MetricsAddr
 	}
 
-	bus, err := NewBus(f.Host, metrics.GlenDimplexAnalogVariablesMapping)
+	reg := prom.NewRegistry()
+	m := metrics.NewMetrics(reg)
+
+	bus, err := modbus.NewBus(cfg.Host, metrics.GlenDimplexAnalogVariablesMapping)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	defer func(bus *metrics.Bus) {
+	defer func(bus *modbus.Bus) {
 		err := bus.Close()
 		if err != nil {
-			log.Printf("error closing bus: %v", err)
+			panic(err)
 		}
 	}(bus)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
+
 	go func() {
-		defer cancel()
-		sig := <-ch
-		log.Println("SIGNAL", sig)
-		if p, _ := os.FindProcess(os.Getpid()); p != nil {
-			time.Sleep(time.Second)
-			_ = p.Signal(sig)
+		if err := http.ListenAndServe(metricsAddr, nil); err != nil {
+			panic(err)
 		}
 	}()
-	errgroup, ctx := errgroup.WithContext(ctx)
 
-	http.HandleFunc("/metrics", func(w http.ResponseWriter, req *http.Request) {
-		vmetrics.WritePrometheus(w, true)
-	})
-
-	errgroup.Go(func() error {
-		return http.ListenAndServe(metricsAddr, nil)
-	})
-
-	var mutex sync.Mutex
 	measurement := metrics.GlenDimplexAnalogVariablesMapping.NewMeasurement()
 
 	interval := 10 * time.Second
 	ticker := time.NewTicker(interval)
-	initialRun := true
+	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
+	if err = bus.Observe(measurement.AnalogVariables); err != nil {
+		panic(err)
+	}
+
+	for analogVar := range measurement.AnalogVariables {
+		metrics.RecordAnalogMetrics(analogVar, m, measurement)
+	}
+
+	for range ticker.C {
 		if err = bus.Observe(measurement.AnalogVariables); err != nil {
-			return err
-		}
-		if initialRun {
-			for k := range measurement.AnalogVariables {
-				vmetrics.NewGauge(fmt.Sprintf("modbus_glendimplex_analog{name=%q}", k),
-					func() float64 {
-						mutex.Lock()
-						v := float64(measurement.AnalogVariables[k]) / 10.0
-						mutex.Unlock()
-
-						return v
-					})
-			}
+			panic(err)
 		}
 
-		if len(measurement.IntegerVariables) > 0 {
-			if err = bus.Integers(measurement.IntegerVariables, 0); err != nil {
-				return err
-			}
-			if initialRun {
-				for i := range measurement.IntegerVariables {
-					i := i
-					vmetrics.NewGauge(
-						fmt.Sprintf("modbus_glendimplex_integer{index=\"i%03d\"}", i),
-						func() float64 {
-							mutex.Lock()
-							v := measurement.IntegerVariables[i]
-							mutex.Unlock()
-							return float64(v)
-						})
-				}
-			}
-		}
-
-		if len(measurement.DigitialVariables) > 0 {
-			if err = bus.Bits(measurement.DigitialVariables); err != nil {
-				return err
-			}
-			if initialRun {
-				for i := range measurement.DigitialVariables {
-					i := i
-					vmetrics.NewGauge(
-						fmt.Sprintf("modbus_glendimplex_digital{index=\"b%03d\"}", i),
-						func() float64 {
-							var j float64
-							mutex.Lock()
-							b := measurement.DigitialVariables[i]
-							mutex.Unlock()
-							if b {
-								j = 1
-							}
-							return j
-						})
-				}
-			}
-		}
-
-		if initialRun {
-			logrus.Printf("exporting %d (analog), %d (integer), %d (digital/bits) metrics",
-				len(measurement.AnalogVariables), len(measurement.IntegerVariables), len(measurement.DigitialVariables))
-		}
-		initialRun = false
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-ticker.C:
+		for analogVar := range measurement.AnalogVariables {
+			metrics.RecordAnalogMetrics(analogVar, m, measurement)
 		}
 	}
-}
-
-func NewBus(host string, typ metrics.PCOType) (*metrics.Bus, error) {
-	handler := modbus.NewTCPClientHandler(host + ":502")
-	handler.Timeout = 10 * time.Second
-	handler.SlaveId = 0x7F
-
-	if err := handler.Connect(); err != nil {
-		return nil, err
-	}
-	return &metrics.Bus{Handler: handler, Client: modbus.NewClient(handler), PCOType: typ}, nil
 }

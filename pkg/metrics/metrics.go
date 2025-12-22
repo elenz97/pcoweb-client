@@ -1,147 +1,309 @@
 package metrics
 
 import (
-	"encoding/binary"
-	"fmt"
-	"strings"
+	prom "github.com/prometheus/client_golang/prometheus"
 )
 
-var GlenDimplexAnalogVariablesMapping = PCOType{
-	Names: map[uint16]string{
-		1:   "Outside temp",
-		2:   "Return / House temp",
-		3:   "Hot water temp",
-		5:   "Flow (in) temp",
-		8:   "High pressure sensor (bar)",
-		29:  "Heating Setpoint",
-		53:  "Heating Goal Temperature",
-		58:  "Hot water Setpoint",
-		96:  "Heating Power Level (unsure)",
-		71:  "Additional Pump (operating hours)",
-		72:  "Compressor 1 (operating hours)",
-		73:  "Compressor 2 (operating hours)",
-		74:  "Fan (operating hours)",
-		76:  "Heating Pump (operating hours)",
-		77:  "Hot water Pump (operating hours)",
-		101: "Low-Pressure Sensor (bar)",
+type Metrics struct {
+	OutsideTemperature           prom.Gauge
+	ReturnTemperature            prom.Gauge
+	HotWaterTemperature          prom.Gauge
+	FlowInTemperature            prom.Gauge
+	HighPressureSensorBar        prom.Gauge
+	HeatingSetpoint              prom.Gauge
+	HeatingGoalTemperature       prom.Gauge
+	HotWaterSetpoint             prom.Gauge
+	HeatingPowerLevel            prom.Gauge
+	AdditionalPumpOperatingHours prom.Gauge
+	Compressor1OperatingHours    prom.Gauge
+	Compressor2OperatingHours    prom.Gauge
+	FanOperatingHours            prom.Gauge
+	HeatingPumpOperatingHours    prom.Gauge
+	HotWaterPumpOperatingHours   prom.Gauge
+	LowPressureSensorBar         prom.Gauge
+}
+
+func (vars GlenDimplexAnalogVariables) NewMeasurement() *Measurement {
+	return &Measurement{
+		AnalogVariables: make(AnalogVariables, len(vars.Names)),
+	}
+}
+
+type GlenDimplexAnalogVariableName string
+
+const (
+	GlenDimplexAnalogVariableOutsideTemperature           GlenDimplexAnalogVariableName = "OutsideTemperature"
+	GlenDimplexAnalogVariableReturnTemperature            GlenDimplexAnalogVariableName = "ReturnTemperature"
+	GlenDimplexAnalogVariableHotWaterTemperature          GlenDimplexAnalogVariableName = "HotWaterTemperature"
+	GlenDimplexAnalogVariableFlowInTemperature            GlenDimplexAnalogVariableName = "FlowInTemperature"
+	GlenDimplexAnalogVariableHighPressureSensorBar        GlenDimplexAnalogVariableName = "HighPressureSensorBar"
+	GlenDimplexAnalogVariableHeatingSetpoint              GlenDimplexAnalogVariableName = "HeatingSetpoint"
+	GlenDimplexAnalogVariableHeatingGoalTemperature       GlenDimplexAnalogVariableName = "HeatingGoalTemperature"
+	GlenDimplexAnalogVariableHotWaterSetpoint             GlenDimplexAnalogVariableName = "HotWaterSetpoint"
+	GlenDimplexAnalogVariableHeatingPowerLevel            GlenDimplexAnalogVariableName = "HeatingPowerLevel"
+	GlenDimplexAnalogVariableAdditionalPumpOperatingHours GlenDimplexAnalogVariableName = "AdditionalPumpOperatingHours"
+	GlenDimplexAnalogVariableCompressor1OperatingHours    GlenDimplexAnalogVariableName = "Compressor1OperatingHours"
+	GlenDimplexAnalogVariableCompressor2OperatingHours    GlenDimplexAnalogVariableName = "Compressor2OperatingHours"
+	GlenDimplexAnalogVariableFanOperatingHours            GlenDimplexAnalogVariableName = "FanOperatingHours"
+	GlenDimplexAnalogVariableHeatingPumpOperatingHours    GlenDimplexAnalogVariableName = "HeatingPumpOperatingHours"
+	GlenDimplexAnalogVariableHotWaterPumpOperatingHours   GlenDimplexAnalogVariableName = "HotWaterPumpOperatingHours"
+	GlenDimplexAnalogVariableLowPressureSensorBar         GlenDimplexAnalogVariableName = "LowPressureSensorBar"
+)
+
+var GlenDimplexAnalogVariablesMapping = GlenDimplexAnalogVariables{
+	Names: map[uint16]GlenDimplexAnalogVariableName{
+		1:   GlenDimplexAnalogVariableOutsideTemperature,
+		2:   GlenDimplexAnalogVariableReturnTemperature,
+		3:   GlenDimplexAnalogVariableHotWaterTemperature,
+		5:   GlenDimplexAnalogVariableFlowInTemperature,
+		8:   GlenDimplexAnalogVariableHighPressureSensorBar,
+		29:  GlenDimplexAnalogVariableHeatingSetpoint,
+		53:  GlenDimplexAnalogVariableHeatingGoalTemperature,
+		58:  GlenDimplexAnalogVariableHotWaterSetpoint,
+		96:  GlenDimplexAnalogVariableHeatingPowerLevel,
+		71:  GlenDimplexAnalogVariableAdditionalPumpOperatingHours,
+		72:  GlenDimplexAnalogVariableCompressor1OperatingHours,
+		73:  GlenDimplexAnalogVariableCompressor2OperatingHours,
+		74:  GlenDimplexAnalogVariableFanOperatingHours,
+		76:  GlenDimplexAnalogVariableHeatingPumpOperatingHours,
+		77:  GlenDimplexAnalogVariableHotWaterPumpOperatingHours,
+		101: GlenDimplexAnalogVariableLowPressureSensorBar,
 	},
 }
 
-func (bs DigitalVariables) String() string {
-	var buf strings.Builder
-	for _, b := range bs {
-		if b {
-			buf.WriteByte('1')
-		} else {
-			buf.WriteByte('0')
-		}
+func NewMetrics(reg prom.Registerer) *Metrics {
+	subsystemAnalog := "analog"
+	namespace := "glendimplex"
+	outsideTemperature := prom.NewGauge(prom.GaugeOpts{
+		Name:      "outside_temperature",
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Help:      "Outside temperature in Celsius",
+		ConstLabels: prom.Labels{
+			"domain": "sensors",
+		},
+	})
+
+	returnTemperature := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "return_temperature",
+		Help:      "Return temperature in Celsius",
+		ConstLabels: prom.Labels{
+			"domain": "sensors",
+		},
+	})
+
+	hotWaterTemperature := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "hot_water_temperature",
+		Help:      "Hot water temperature in Celsius",
+		ConstLabels: prom.Labels{
+			"domain": "sensors",
+		},
+	})
+
+	flowInTemperature := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "flow_in_temperature",
+		Help:      "Flow in temperature in Celsius",
+		ConstLabels: prom.Labels{
+			"domain": "sensors",
+		},
+	})
+
+	highPressureSensorBar := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "high_pressure_sensor_bar",
+		Help:      "High pressure sensor bar in bar",
+		ConstLabels: prom.Labels{
+			"domain": "pressures",
+		},
+	})
+
+	heatingSetpoint := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "heating_setpoint",
+		Help:      "Heating setpoint in Celsius",
+		ConstLabels: prom.Labels{
+			"domain": "heating",
+		},
+	})
+
+	heatingGoalTemperature := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "heating_goal_temperature",
+		Help:      "Heating goal temperature in Celsius",
+		ConstLabels: prom.Labels{
+			"domain": "heating",
+		},
+	})
+
+	hotWaterSetpoint := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "hot_water_setpoint",
+		Help:      "Hot water setpoint in Celsius",
+		ConstLabels: prom.Labels{
+			"domain": "heating",
+		},
+	})
+
+	heatingPowerLevel := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "heating_power_level",
+		Help:      "Heating power level in percent",
+		ConstLabels: prom.Labels{
+			"domain": "heating",
+		},
+	})
+
+	additionalPumpOperatingHours := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "additional_pump_operating_hours",
+		Help:      "Additional pump operating hours in hours",
+		ConstLabels: prom.Labels{
+			"domain": "operational",
+		},
+	})
+
+	compressor1OperatingHours := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "compressor1_operating_hours",
+		Help:      "Compressor 1 operating hours in hours",
+		ConstLabels: prom.Labels{
+			"domain": "operational",
+		},
+	})
+
+	compressor2OperatingHours := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "compressor2_operating_hours",
+		Help:      "Compressor 2 operating hours in hours",
+		ConstLabels: prom.Labels{
+			"domain": "operational",
+		},
+	})
+
+	fanOperatingHours := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "fan_operating_hours",
+		Help:      "Fan operating hours in hours",
+		ConstLabels: prom.Labels{
+			"domain": "operational",
+		},
+	})
+
+	heatingPumpOperatingHours := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "heating_pump_operating_hours",
+		Help:      "Heating pump operating hours in hours",
+		ConstLabels: prom.Labels{
+			"domain": "operational",
+		},
+	})
+
+	hotWaterPumpOperatingHours := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "hot_water_pump_operating_hours",
+		Help:      "Hot water pump operating hours in hours",
+		ConstLabels: prom.Labels{
+			"domain": "operational",
+		},
+	})
+
+	lowPressureSensorBar := prom.NewGauge(prom.GaugeOpts{
+		Namespace: namespace,
+		Subsystem: subsystemAnalog,
+		Name:      "low_pressure_sensor_bar",
+		Help:      "Low pressure sensor bar in bar",
+		ConstLabels: prom.Labels{
+			"domain": "pressures",
+		},
+	})
+
+	reg.MustRegister(outsideTemperature,
+		returnTemperature,
+		hotWaterTemperature,
+		flowInTemperature,
+		highPressureSensorBar,
+		heatingSetpoint,
+		heatingGoalTemperature,
+		hotWaterSetpoint,
+		heatingPowerLevel,
+		additionalPumpOperatingHours,
+		compressor1OperatingHours,
+		compressor2OperatingHours,
+		fanOperatingHours,
+		heatingPumpOperatingHours,
+		hotWaterPumpOperatingHours,
+		lowPressureSensorBar)
+
+	return &Metrics{
+		OutsideTemperature:           outsideTemperature,
+		ReturnTemperature:            returnTemperature,
+		HotWaterTemperature:          hotWaterTemperature,
+		FlowInTemperature:            flowInTemperature,
+		HighPressureSensorBar:        highPressureSensorBar,
+		HeatingSetpoint:              heatingSetpoint,
+		HeatingGoalTemperature:       heatingGoalTemperature,
+		HotWaterSetpoint:             hotWaterSetpoint,
+		HeatingPowerLevel:            heatingPowerLevel,
+		AdditionalPumpOperatingHours: additionalPumpOperatingHours,
+		Compressor1OperatingHours:    compressor1OperatingHours,
+		Compressor2OperatingHours:    compressor2OperatingHours,
+		FanOperatingHours:            fanOperatingHours,
+		HeatingPumpOperatingHours:    heatingPumpOperatingHours,
+		HotWaterPumpOperatingHours:   hotWaterPumpOperatingHours,
+		LowPressureSensorBar:         lowPressureSensorBar,
 	}
-	return buf.String()
 }
 
-func (bs DigitalVariables) DiffIndex(as DigitalVariables) int {
-	if len(as) != len(bs) {
-		return 0
+func RecordAnalogMetrics(analogVar GlenDimplexAnalogVariableName, m *Metrics, measurement *Measurement) {
+	switch analogVar {
+	case GlenDimplexAnalogVariableOutsideTemperature:
+		m.OutsideTemperature.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableReturnTemperature:
+		m.ReturnTemperature.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableHotWaterTemperature:
+		m.HotWaterTemperature.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableFlowInTemperature:
+		m.FlowInTemperature.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableHighPressureSensorBar:
+		m.HighPressureSensorBar.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableHeatingSetpoint:
+		m.HeatingSetpoint.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableHeatingGoalTemperature:
+		m.HeatingGoalTemperature.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableHotWaterSetpoint:
+		m.HotWaterSetpoint.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableHeatingPowerLevel:
+		m.HeatingPowerLevel.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
+	case GlenDimplexAnalogVariableAdditionalPumpOperatingHours:
+		m.AdditionalPumpOperatingHours.Set(float64(measurement.AnalogVariables[analogVar]))
+	case GlenDimplexAnalogVariableCompressor1OperatingHours:
+		m.Compressor1OperatingHours.Set(float64(measurement.AnalogVariables[analogVar]))
+	case GlenDimplexAnalogVariableCompressor2OperatingHours:
+		m.Compressor2OperatingHours.Set(float64(measurement.AnalogVariables[analogVar]))
+	case GlenDimplexAnalogVariableFanOperatingHours:
+		m.FanOperatingHours.Set(float64(measurement.AnalogVariables[analogVar]))
+	case GlenDimplexAnalogVariableHeatingPumpOperatingHours:
+		m.HeatingPumpOperatingHours.Set(float64(measurement.AnalogVariables[analogVar]))
+	case GlenDimplexAnalogVariableHotWaterPumpOperatingHours:
+		m.HotWaterPumpOperatingHours.Set(float64(measurement.AnalogVariables[analogVar]))
+	case GlenDimplexAnalogVariableLowPressureSensorBar:
+		m.LowPressureSensorBar.Set(float64(measurement.AnalogVariables[analogVar]) / 10.0)
 	}
-	for i, b := range as {
-		if b != bs[i] {
-			return i
-		}
-	}
-	return -1
-}
-
-func (is IntegerVariables) String() string {
-	var buf strings.Builder
-	buf.WriteByte('[')
-	for i, u := range is {
-		if i != 0 {
-			buf.WriteByte(' ')
-		}
-		fmt.Fprintf(&buf, "%d", u)
-	}
-	buf.WriteByte(']')
-	return buf.String()
-}
-
-func (is IntegerVariables) DiffIndex(js IntegerVariables) int {
-	if len(is) != len(js) {
-		return 0
-	}
-	for i, v := range is {
-		if v != js[i] {
-			return i
-		}
-	}
-	return -1
-}
-
-func (typ PCOType) NewMeasurement() *Measurement {
-	return &Measurement{
-		AnalogVariables:   make(AnalogVariables, len(typ.Names)),
-		IntegerVariables:  make(IntegerVariables, typ.Length),
-		DigitialVariables: make(DigitalVariables, typ.Length),
-	}
-}
-
-func (bus *Bus) Close() error {
-	bus.mu.Lock()
-	handler := bus.Handler
-	bus.Handler = nil
-	bus.mu.Unlock()
-	if handler != nil {
-		return handler.Close()
-	}
-	return nil
-}
-
-func (bus *Bus) Integers(dest []uint16, offset int) error {
-	results, err := bus.ReadDiscreteInputs(uint16(offset)+1, uint16(len(dest)))
-	for i := 0; i+1 < len(results); i += 2 {
-		dest[i/2] = binary.BigEndian.Uint16(results[i : i+2])
-	}
-	return err
-}
-
-func (bus *Bus) Coils(bits []bool, offset int) error {
-	results, err := bus.ReadCoils(uint16(offset)+1, uint16(len(bits)))
-	for i, b := range results {
-		for j := uint(0); j < 8; j++ {
-			bits[uint(i)*8+j] = b&(1<<j) != 0
-		}
-	}
-	return err
-}
-
-func (bus *Bus) Observe(m map[string]int16) error {
-	results, err := bus.ReadInputRegisters(1, 125)
-	for i := 0; i+1 < len(results); i += 2 {
-		nm := bus.Names[uint16(i/2)+1]
-		if nm == "" {
-			continue
-		}
-		m[nm] = int16(binary.BigEndian.Uint16(results[i : i+2]))
-	}
-	return err
-}
-
-func (bus *Bus) Bits(bits []bool) error {
-	results, err := bus.ReadCoils(1, bus.Length)
-	n := 0
-	for i := 0; i+1 < len(results); i += 2 {
-		for k := range []int{1, 0} {
-			res := results[i+k]
-			for j := uint8(0); j < 8; j++ {
-				bits[n] = false
-				if res&(1<<j) != 0 {
-					bits[n] = true
-				}
-				n++
-				if n == len(bits) {
-					return err
-				}
-			}
-		}
-	}
-	return err
 }

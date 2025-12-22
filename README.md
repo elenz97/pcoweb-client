@@ -2,6 +2,22 @@
 
 Prometheus exporter for Glen Dimplex heat pumps
 
+## Installation
+
+```shell
+$ make help
+
+Usage:
+  make <target>
+
+Help
+  help             Display this help.
+
+Build
+  build-linux      Build binary for Linux
+  build-arm        Build binary for ARM architecture
+```
+
 ## Usage
 
 ```shell
