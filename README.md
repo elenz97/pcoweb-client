@@ -73,7 +73,7 @@ For now, only analog variables are read from the client.
 | 1663        | Total Heating (kWh)              |             |
 | 1675        | Heating (kWh)                    |             |
 | 1681        | Hot Water (kWh)                  |             |
-| 1669        | Total Hot Water (kWh)	           |             |
+| 1669        | Total Hot Water (kWh)            |             |
 | 1647        | Environmental Energy (kWh)       |             |
 | 1644        | Total Environmental Energy (kWh) |             |
 ```
