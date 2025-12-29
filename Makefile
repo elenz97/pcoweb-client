@@ -10,14 +10,14 @@ help: ## Display this help.
 .SILENT: build-linux
 .PHONY: build-linux
 build-linux: ## Build binary for Linux
-	@CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -extldflags '-static'" -a -o pcoweb-client
+	@CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -extldflags '-static'" -a -o dimplex-pcoweb-exporter
 
 .SILENT: build-armv7
 .PHONY: build-armv7
 build-armv7: ## Build binary for ARMv7 architecture
-	@GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -ldflags="-s -w" -o pcoweb-client-armv7
+	@GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -ldflags="-s -w" -o dimplex-pcoweb-exporter-armv7
 
 .SILENT: build-arm64
 .PHONY: build-arm64
 build-arm64: ## Build binary for ARM64 architecture
-	@GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o pcoweb-client-arm64
+	@GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o dimplex-pcoweb-exporter-arm64

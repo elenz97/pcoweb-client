@@ -20,8 +20,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/elenz97/pcoweb-client/pkg/metrics"
-	"github.com/elenz97/pcoweb-client/pkg/modbus"
+	"github.com/elenz97/dimplex-pcoweb-exporter/pkg/metrics"
+	"github.com/elenz97/dimplex-pcoweb-exporter/pkg/modbus"
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

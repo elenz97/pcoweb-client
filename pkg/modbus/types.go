@@ -3,7 +3,7 @@ package modbus
 import (
 	"sync"
 
-	"github.com/elenz97/pcoweb-client/pkg/metrics"
+	"github.com/elenz97/dimplex-pcoweb-exporter/pkg/metrics"
 	"github.com/goburrow/modbus"
 )
 

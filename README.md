@@ -1,4 +1,4 @@
-# pcoweb-client
+# dimplex-pcoweb-exporter
 
 Prometheus exporter for Glen Dimplex heat pumps (heavily modified fork of https://github.com/tgulacsi/pcoweb-client).
 
@@ -24,14 +24,14 @@ Build
 ## Usage
 
 ```shell
-Usage of pcoweb-client:
+Usage of dimplex-pcoweb-exporter:
       --host string           modbus host to connect to
       --metrics-port string   metrics address to listen on (default ":9112")
 ```
 
 ## Metrics
 
-Below values are (roughly mapped, errors not to be ruled out) taken from `https://pcoweb-client-address/config/adminpage.html` and `https://pcoweb-client-address/http/`.
+Below values are (roughly mapped, errors not to be ruled out) taken from `https://pcoweb-address/config/adminpage.html` and `https://pcoweb-address/http/`.
 For now, only analog variables are read from the client.
 
 All metrics are prefixed with `glendimplex_`, following the respective subsystem (`analog_` for analog variables, `integer_` for integer variables, ...).
