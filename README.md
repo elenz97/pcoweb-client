@@ -1,6 +1,8 @@
 # pcoweb-client
 
-Prometheus exporter for Glen Dimplex heat pumps (heavily modified fork of https://github.com/tgulacsi/pcoweb-client)
+Prometheus exporter for Glen Dimplex heat pumps (heavily modified fork of https://github.com/tgulacsi/pcoweb-client).
+
+This client, in combination with a Prometheus and Grafana instance, can be used to monitor and visualize the metrics of a Glen Dimplex heat pump - effectively obsoleting the need for the "Graphical device data" "Premium" features of the "Dimplex Home" app (saving you the 9,99€/year).
 
 ## Installation
 
@@ -32,8 +34,6 @@ Usage of pcoweb-client:
 Below values are (roughly mapped, errors not to be ruled out) taken from `https://pcoweb-client-address/config/adminpage.html` and `https://pcoweb-client-address/http/`.
 For now, only analog variables are read from the client.
 
-### Analog Variables
-
 <details>
 
 <summary>Analog Variables</summary>
@@ -60,8 +60,6 @@ For now, only analog variables are read from the client.
 ```
 
 </details>
-
-### Integer Variables
 
 <details>
 
