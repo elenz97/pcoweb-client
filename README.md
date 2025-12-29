@@ -86,4 +86,4 @@ For now, only analog variables are read from the client.
 
 In the `./grafana` directory, you can find a `dashboard.json` file showing the heat pump's metrics.
 
-![Grafana](./static/assets/grafana.png "a title")
+![Grafana](./static/assets/grafana.png "grafana")
