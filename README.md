@@ -1,6 +1,6 @@
 # pcoweb-client
 
-Prometheus exporter for Glen Dimplex heat pumps
+Prometheus exporter for Glen Dimplex heat pumps (heavily modified fork of https://github.com/tgulacsi/pcoweb-client)
 
 ## Installation
 
@@ -15,7 +15,8 @@ Help
 
 Build
   build-linux      Build binary for Linux
-  build-arm        Build binary for ARM architecture
+  build-armv7      Build binary for ARMv7 architecture
+  build-arm64      Build binary for ARM64 architecture
 ```
 
 ## Usage
@@ -28,10 +29,16 @@ Usage of pcoweb-client:
 
 ## Metrics
 
-Below values are (roughly mapped, errors not to be ruled out) taken from `https://pcoweb-client-address/config/adminpage.html` and `https://pcoweb-client-address/http/`
+Below values are (roughly mapped, errors not to be ruled out) taken from `https://pcoweb-client-address/config/adminpage.html` and `https://pcoweb-client-address/http/`.
+For now, only analog variables are read from the client.
 
 ### Analog Variables
 
+<details>
+
+<summary>Analog Variables</summary>
+
+```
 | Analogue Bit | Name                              | Description |
 |--------------|-----------------------------------|-------------|
 | 1            | Outside Temperature               |             |
@@ -50,9 +57,17 @@ Below values are (roughly mapped, errors not to be ruled out) taken from `https:
 | 77           | Hot Water Pump (Operating Hours)  |             |
 | 96           | Heating Power Level (unsure)      |             |
 | 101          | Low-Pressure Sensor (bar)         |             |
+```
+
+</details>
 
 ### Integer Variables
 
+<details>
+
+<summary>Integer Variables</summary>
+
+```
 | Integer Bit | Name                             | Description |
 |-------------|----------------------------------|-------------|
 | 95          | Generated Heat (kWh)             |             |
@@ -63,3 +78,12 @@ Below values are (roughly mapped, errors not to be ruled out) taken from `https:
 | 1669        | Total Hot Water (kWh)	           |             |
 | 1647        | Environmental Energy (kWh)       |             |
 | 1644        | Total Environmental Energy (kWh) |             |
+```
+
+</details>
+
+### Grafana Dashboard
+
+In the `./grafana` directory, you can find a `dashboard.json` file showing the heat pump's metrics.
+
+![Grafana](./static/assets/grafana.png "a title")
