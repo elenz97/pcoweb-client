@@ -34,30 +34,36 @@ Usage of pcoweb-client:
 Below values are (roughly mapped, errors not to be ruled out) taken from `https://pcoweb-client-address/config/adminpage.html` and `https://pcoweb-client-address/http/`.
 For now, only analog variables are read from the client.
 
+All metrics are prefixed with `glendimplex_`, following the respective subsystem (`analog_` for analog variables, `integer_` for integer variables, ...).
+
 <details>
 
 <summary>Analog Variables</summary>
 
-```
-| Analogue Bit | Name                              | Description |
+Analog variables are read from the _Holding Register_, as per [documentation](https://dimplex.atlassian.net/wiki/spaces/DW/pages/3303571457/Modbus+TCP+Anbindung#4-Unterst%C3%BCtze-Funktionscodes).
+
+| Analogue Bit | Name                              | Metric name |
 |--------------|-----------------------------------|-------------|
-| 1            | Outside Temperature               |             |
-| 2            | Return / House Temperature        |             |
-| 3            | Actual Hot Water                  |             |
-| 5            | Flow (in)                         |             |
-| 8            | High-Pressure Sensor (bar)        |             |
-| 29           | Heating Setpoint                  |             |
-| 53           | Heating Goal Temperature          |             |
-| 58           | Hot Water Setpoint                |             |
-| 71           | Additional Pump (Operating Hours) |             |
-| 72           | Compressor 1 (Operating Hours)    |             |
-| 73           | Compressor 2 (Operating Hours)    |             |
-| 74           | Fan (Operating Hours)             |             |
-| 76           | Heating Pump (Operating Hours)    |             |
-| 77           | Hot Water Pump (Operating Hours)  |             |
-| 96           | Heating Power Level (unsure)      |             |
-| 101          | Low-Pressure Sensor (bar)         |             |
-```
+| 1            | Outside Temperature               |glendimplex_analog_outside_temperature|
+| 2            | Return / House Temperature        |glendimplex_analog_return_temperature|
+| 3            | Hot Water Temperature             |glendimplex_analog_hot_water_temperature|
+| 5            | Flow (in)                         |glendimplex_analog_flow_in_temperature|
+| 8            | High-Pressure Sensor (bar)        |glendimplex_analog_high_pressure_sensor_bar|
+| 29           | Heating Setpoint (first circuit)  |glendimplex_analog_heating_setpoint|
+| 53           | Heating Goal Temperature          |glendimplex_analog_heating_goal_temperature|
+| 54           | Heating Setpoint (second circuit) |glendimplex_analog_heating_setpoint2|
+| 55           | Heating Setpoint (third circuit)  |glendimplex_analog_heating_setpoint3|
+| 58           | Hot Water Setpoint                |glendimplex_analog_hot_water_setpoint|
+| 71           | Additional Pump (Operating Hours) |glendimplex_analog_additional_pump_operating_hours|
+| 72           | Compressor 1 (Operating Hours)    |glendimplex_analog_compressor1_operating_hours|
+| 73           | Compressor 2 (Operating Hours)    |glendimplex_analog_compressor2_operating_hours|
+| 74           | Fan (Operating Hours)             |glendimplex_analog_fan_operating_hours|
+| 75           | Second Heater (Operating Hours)   |glendimplex_analog_second_heater_operating_hours|
+| 76           | Heating Pump (Operating Hours)    |glendimplex_analog_heating_pump_operating_hours|
+| 77           | Hot Water Pump (Operating Hours)  |glendimplex_analog_hot_water_pump_operating_hours|
+| 78           | Flange Heater (Operating Hours)   |glendimplex_analog_flange_heater_operating_hours|
+| 96           | [Heating Power Level](https://dimplex.atlassian.net/wiki/x/toLox)|glendimplex_analog_heating_power_level|
+| 101          | Low-Pressure Sensor (bar)         |glendimplex_analog_low_pressure_sensor_bar|
 
 </details>
 
@@ -65,7 +71,6 @@ For now, only analog variables are read from the client.
 
 <summary>Integer Variables</summary>
 
-```
 | Integer Bit | Name                             | Description |
 |-------------|----------------------------------|-------------|
 | 95          | Generated Heat (kWh)             |             |
@@ -76,7 +81,6 @@ For now, only analog variables are read from the client.
 | 1669        | Total Hot Water (kWh)            |             |
 | 1647        | Environmental Energy (kWh)       |             |
 | 1644        | Total Environmental Energy (kWh) |             |
-```
 
 </details>
 

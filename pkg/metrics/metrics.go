@@ -188,7 +188,7 @@ func NewMetrics(reg prom.Registerer) *Metrics {
 		Namespace: namespace,
 		Subsystem: subsystemAnalog,
 		Name:      "heating_power_level",
-		Help:      "Heating power level in percent",
+		Help:      "Heating power level",
 		ConstLabels: prom.Labels{
 			"domain": "heating",
 		},
